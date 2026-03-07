@@ -92,6 +92,7 @@ class TradingBot:
 
         return {
             "running": self._running,
+            "paper_trading": self.config.paper_trading,
             "strategy": getattr(self, "_strategy", self.config.default_strategy),
             "market_id": self._market_id,
             "open_trade": self._trade_to_dict(open_trade),
@@ -128,9 +129,12 @@ class TradingBot:
             logger.info("Prediction: %s (confidence=%.3f)", direction, confidence)
 
             # Resolve the market for THIS window (changes every 5 minutes)
-            self._market_id = self.polymarket.find_btc_5min_market()
-            if not self._market_id:
-                logger.warning("No BTC 5-min market open yet — skipping cycle")
+            if self.config.paper_trading:
+                self._market_id = None  # force paper path — no real orders placed
+            else:
+                self._market_id = self.polymarket.find_btc_5min_market()
+                if not self._market_id:
+                    logger.warning("No BTC 5-min market open yet — skipping cycle")
 
             db = self.db_session_factory()
             try:

@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     telegram_chat_id: str = ""
 
     # Bot defaults
+    paper_trading: bool = False  # set PAPER_TRADING=true to skip real orders
     risk_per_trade_usd: float = 10.0
     confidence_threshold: float = 0.55
     default_strategy: str = "both"  # tech | ml | both
