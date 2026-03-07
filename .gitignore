@@ -1,0 +1,21 @@
+# Environment
+.env
+
+# Database & ML model (generated at runtime)
+polytrip.db
+ml_model.pkl
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+
+# Misc
+.DS_Store
