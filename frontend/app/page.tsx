@@ -4,6 +4,7 @@ import { api, BotStatus, Trade } from "@/lib/api";
 import { StatusCard } from "@/components/StatusCard";
 import { BotControls } from "@/components/BotControls";
 import { TradesTable } from "@/components/TradesTable";
+import { PnlChart } from "@/components/PnlChart";
 
 export default function Dashboard() {
   const [status, setStatus] = useState<BotStatus | null>(null);
@@ -46,6 +47,11 @@ export default function Dashboard() {
           />
         </div>
       )}
+
+      <div className="bg-gray-900 rounded-xl p-5 border border-gray-800">
+        <h2 className="font-semibold text-sm text-gray-300 mb-3">Cumulative P&L</h2>
+        <PnlChart trades={trades} />
+      </div>
 
       <div className="bg-gray-900 rounded-xl p-5 border border-gray-800">
         <h2 className="font-semibold text-sm text-gray-300 mb-4">Recent Trades</h2>

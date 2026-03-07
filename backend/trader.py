@@ -13,6 +13,7 @@ from datetime import datetime
 from typing import Optional
 
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 logger = logging.getLogger(__name__)
 
@@ -35,11 +36,15 @@ class TradingBot:
         if self._running:
             return
         self._strategy = strategy or self.config.default_strategy
-        self._market_id = self.polymarket.find_btc_5min_market()
-        if not self._market_id:
-            logger.warning("No BTC 5-min market found on Polymarket — running in paper mode")
+        # Market ID is looked up fresh each cycle — do not cache it here,
+        # because each 5-minute window has a different market.
 
-        self._scheduler.add_job(self.run_cycle, "interval", minutes=5, id="trading_cycle")
+        self._scheduler.add_job(
+            self.run_cycle,
+            CronTrigger(minute="*/5"),  # fires at :00, :05, :10, ... (UTC clock boundaries)
+            id="trading_cycle",
+            max_instances=1,            # never overlap if a cycle runs long
+        )
         self._scheduler.start()
         self._running = True
         logger.info("Trading bot started (strategy=%s)", self._strategy)
@@ -109,7 +114,7 @@ class TradingBot:
         }
 
     def run_cycle(self):
-        """Main trading cycle — called every 5 minutes."""
+        """Main trading cycle — called every 5 minutes at clock boundaries."""
         try:
             from data_fetcher import fetch_latest_candles
             from models import Trade
@@ -121,6 +126,11 @@ class TradingBot:
 
             direction, confidence = self.predictor.predict(df, strategy=self._strategy)
             logger.info("Prediction: %s (confidence=%.3f)", direction, confidence)
+
+            # Resolve the market for THIS window (changes every 5 minutes)
+            self._market_id = self.polymarket.find_btc_5min_market()
+            if not self._market_id:
+                logger.warning("No BTC 5-min market open yet — skipping cycle")
 
             db = self.db_session_factory()
             try:
